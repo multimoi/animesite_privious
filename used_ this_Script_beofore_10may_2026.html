@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MovieStream - Multi-Language Servers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0d0d1a;
+            --bg-secondary: #13132a;
+            --bg-card: rgba(255,255,255,0.04);
+            --bg-card-hover: rgba(255,255,255,0.08);
+            --accent: #6c63ff;
+            --accent-light: #9f99ff;
+            --accent-glow: rgba(108,99,255,0.25);
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(108,99,255,0.4);
+            --text: #e8e8f0;
+            --text-muted: rgba(232,232,240,0.55);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-full: 9999px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.45);
+            --transition: 0.2s ease;
+        }
+
+        *, *::before, *::after {
+            margin: 0; padding: 0;
+            box-sizing: border-box;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.4); border-radius: 99px; }
+
+        /* ── LAYOUT ── */
+        .wrap {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 clamp(12px, 4vw, 32px);
+        }
+
+        /* ── HEADER ── */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(13,13,26,0.9);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: clamp(10px, 2vw, 16px) 0;
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: clamp(22px, 4vw, 28px);
+            color: var(--accent);
+            filter: drop-shadow(0 0 8px var(--accent-glow));
+        }
+
+        .logo h1 {
+            font-size: clamp(18px, 3.5vw, 24px);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            white-space: nowrap;
+        }
+
+        .search-bar {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            padding: 10px 18px;
+            color: var(--text);
+            font-size: clamp(13px, 2.5vw, 15px);
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-input::placeholder { color: var(--text-muted); }
+
+        .btn {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-full);
+            padding: 10px 20px;
+            color: #fff;
+            font-size: clamp(13px, 2.5vw, 15px);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+            flex-shrink: 0;
+        }
+
+        .btn:hover {
+            background: var(--accent-light);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .btn:active { transform: translateY(0); }
+
+        /* ── MAIN ── */
+        main {
+            padding: clamp(14px, 3vw, 28px) 0 clamp(24px, 5vw, 48px);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(14px, 3vw, 22px);
+        }
+
+        /* ── DB INFO ── */
+        .db-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(108,99,255,0.1);
+            border: 1px solid rgba(108,99,255,0.25);
+            border-radius: var(--radius-sm);
+            font-size: clamp(12px, 2vw, 14px);
+            color: var(--accent-light);
+        }
+
+        /* ── SEARCH RESULTS ── */
+        .search-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(clamp(130px, 18vw, 180px), 1fr));
+            gap: clamp(10px, 2vw, 18px);
+        }
+
+        .search-result {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+        }
+
+        .search-result:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+            border-color: var(--border-hover);
+        }
+
+        .result-poster {
+            width: 100%;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            display: block;
+        }
+
+        .result-info { padding: 10px 12px; }
+
+        .result-title {
+            font-weight: 600;
+            font-size: clamp(12px, 2vw, 14px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-year {
+            font-size: clamp(11px, 1.8vw, 13px);
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .result-type {
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 11px;
+            background: rgba(108,99,255,0.25);
+            color: var(--accent-light);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+        }
+
+        /* ── SERVER SECTION ── */
+        .server-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .server-section-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .server-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .server-selector { position: relative; }
+
+        .server-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            padding: 9px 16px;
+            color: var(--text);
+            font-size: clamp(12px, 2vw, 14px);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+            transition: all var(--transition);
+        }
+
+        .server-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            color: var(--accent-light);
+        }
+
+        .server-btn i.chevron { font-size: 11px; transition: transform var(--transition); }
+        .server-btn.open i.chevron { transform: rotate(180deg); }
+
+        .server-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 280px;
+            max-width: min(320px, calc(100vw - 24px));
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-6px);
+            transition: all 0.18s ease;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .server-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* flip dropdown if near right edge */
+        .server-selector:last-child .server-dropdown,
+        .server-selector:nth-last-child(-n+2) .server-dropdown {
+            left: auto;
+            right: 0;
+        }
+
+        .server-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition);
+        }
+
+        .server-item:last-child { border-bottom: none; }
+
+        .server-item:hover { background: var(--bg-card-hover); }
+
+        .server-item.active {
+            background: rgba(108,99,255,0.15);
+            border-left: 3px solid var(--accent);
+        }
+
+        .server-flag {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .hindi-flag   { background: linear-gradient(135deg,#FF9933,#fff,#138808); color:#000; }
+        .ENGLISH-flag { background: linear-gradient(135deg,#012169,#C8102E,#fff); }
+        .bengali-flag { background: linear-gradient(135deg,#FF9933,#fff,#138808); color:#000; }
+        .german-flag  { background: linear-gradient(135deg,#000,#DD0000,#FFCE00); }
+        .germanmovie-flag { background: linear-gradient(135deg,#000,#DD0000,#FFCE00); }
+        .animeenglish-flag { background: linear-gradient(135deg,#FF69B4,#4B0082,#00FFFF); }
+
+        .server-info { flex: 1; min-width: 0; }
+
+        .server-name {
+            font-weight: 600;
+            font-size: clamp(13px, 2vw, 15px);
+        }
+
+        .server-desc {
+            font-size: clamp(11px, 1.8vw, 12px);
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .server-check { color: var(--accent); opacity: 0; transition: opacity var(--transition); font-size: 13px; }
+        .server-item.active .server-check { opacity: 1; }
+
+        /* ── EPISODE NAV ── */
+        .episode-nav {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .episode-nav-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: clamp(12px, 2.5vw, 16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .episode-nav-title {
+            font-weight: 700;
+            font-size: clamp(14px, 2.5vw, 16px);
+            color: var(--accent-light);
+        }
+
+        .season-selector {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 7px 12px;
+            color: var(--text);
+            font-size: clamp(12px, 2vw, 14px);
+            cursor: pointer;
+            outline: none;
+            max-width: 220px;
+        }
+
+        .episode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(clamp(42px, 8vw, 56px), 1fr));
+            gap: clamp(6px, 1.5vw, 10px);
+            padding: clamp(10px, 2vw, 16px);
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .episode-button {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 9px 4px;
+            color: var(--text);
+            font-size: clamp(12px, 2vw, 14px);
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all var(--transition);
+        }
+
+        .episode-button:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+        }
+
+        .episode-button.active {
+            background: rgba(108,99,255,0.3);
+            border-color: var(--accent);
+            color: var(--accent-light);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* ── PLAYER ── */
+        .player-wrap {
+            background: #000;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .player-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: clamp(10px, 2vw, 14px) clamp(12px, 3vw, 20px);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .movie-title {
+            font-size: clamp(13px, 2.5vw, 17px);
+            font-weight: 700;
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .current-server-badge {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            padding: 6px 14px;
+            font-size: clamp(11px, 1.8vw, 13px);
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+        }
+
+        .video-player {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            border: none;
+            background: #000;
+        }
+
+        /* ── NOTICE ── */
+        .notice {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(108,99,255,0.07);
+            border: 1px solid rgba(108,99,255,0.18);
+            border-radius: var(--radius-sm);
+            font-size: clamp(12px, 2vw, 13px);
+            color: var(--text-muted);
+        }
+
+        .notice i { color: var(--accent); flex-shrink: 0; }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: clamp(16px, 4vw, 24px);
+            box-shadow: var(--shadow);
+            transform: scale(0.96) translateY(8px);
+            transition: transform 0.2s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: clamp(16px, 3vw, 20px);
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            transition: color var(--transition);
+        }
+
+        .modal-close:hover { color: #ff6b6b; }
+
+        .url-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .url-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .url-item:hover { background: var(--bg-card-hover); border-color: var(--border-hover); }
+
+        .url-item.active { background: rgba(108,99,255,0.15); border-color: var(--accent); }
+
+        .url-name {
+            font-weight: 600;
+            font-size: clamp(12px, 2vw, 14px);
+            color: var(--accent-light);
+            margin-bottom: 4px;
+        }
+
+        .url-value {
+            font-size: clamp(11px, 1.8vw, 13px);
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        .modal-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-cancel { background: rgba(255,107,107,0.8); }
+        .btn-cancel:hover { background: rgba(255,107,107,1); }
+
+        /* ── UTILITIES ── */
+        .hidden { display: none !important; }
+
+        .loading {
+            padding: clamp(16px, 4vw, 24px);
+            text-align: center;
+            color: var(--accent-light);
+            font-size: clamp(13px, 2.5vw, 15px);
+        }
+
+        .err-msg {
+            padding: clamp(12px, 3vw, 18px);
+            background: rgba(255,107,107,0.1);
+            border: 1px solid rgba(255,107,107,0.25);
+            border-radius: var(--radius-sm);
+            color: #ff6b6b;
+            font-size: clamp(12px, 2vw, 14px);
+            text-align: center;
+        }
+
+        /* ── RESPONSIVE BREAKPOINTS ── */
+
+        /* Large phones / small tablets */
+        @media (max-width: 600px) {
+            .header-inner { gap: 10px; }
+            .search-bar { order: 3; width: 100%; }
+            .server-dropdown {
+                position: fixed;
+                top: auto !important;
+                bottom: 0;
+                left: 0 !important;
+                right: 0 !important;
+                max-width: 100vw;
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+                max-height: 70vh;
+                transform: translateY(100%);
+            }
+            .server-dropdown.active { transform: translateY(0); }
+            .server-selector:last-child .server-dropdown,
+            .server-selector:nth-last-child(-n+2) .server-dropdown {
+                left: 0 !important; right: 0 !important;
+            }
+            .modal { max-height: 95vh; }
+        }
+
+        /* Tiny phones */
+        @media (max-width: 380px) {
+            .server-btn { padding: 8px 12px; font-size: 12px; }
+            .episode-button { font-size: 11px; padding: 7px 3px; }
+            .player-head { flex-direction: column; align-items: flex-start; }
+        }
+
+        /* Medium screens */
+        @media (min-width: 601px) and (max-width: 900px) {
+            .server-chips { gap: 6px; }
+        }
+
+        /* Landscape phone */
+        @media (max-height: 500px) and (max-width: 900px) {
+            .video-container { padding-bottom: 46%; }
+            .episode-grid { max-height: 150px; }
+        }
+
+        /* Wide screens */
+        @media (min-width: 1200px) {
+            .server-chips { gap: 10px; }
+        }
+
+        /* Touch / hover for dropdown flip prevention on mobile */
+        @media (hover: none) {
+            .server-btn:hover { background: var(--bg-card); border-color: var(--border); color: var(--text); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="wrap header-inner">
+        <div class="logo">
+            <i class="fas fa-film"></i>
+            <h1>MovieStream</h1>
+        </div>
+        <div class="search-bar">
+            <input class="search-input" id="search-input" type="text"
+                   placeholder="Search movies, TV shows, anime…" autocomplete="off">
+            <button class="btn" id="search-button">
+                <i class="fas fa-search"></i>
+                <span>Search</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="wrap">
+<main>
+
+    <div class="db-info" id="database-info">
+        <i class="fas fa-database"></i>
+        <span>Loading databases…</span>
+    </div>
+
+    <div class="search-results hidden" id="search-results"></div>
+
+    <div class="episode-nav hidden" id="episode-nav">
+        <div class="episode-nav-head">
+            <div class="episode-nav-title"><i class="fas fa-list-ol"></i> Episodes</div>
+            <select class="season-selector" id="season-selector">
+                <option value="1">Season 1</option>
+            </select>
+        </div>
+        <div class="episode-grid" id="episode-grid"></div>
+    </div>
+
+    <!-- SERVER SELECTORS -->
+    <div class="server-section">
+        <div class="server-section-label">Choose Language &amp; Server</div>
+        <div class="server-chips">
+
+            <!-- HINDI -->
+            <div class="server-selector">
+                <button class="server-btn" id="hindi-server-button">
+                    <i class="fas fa-cloud"></i> Hindi
+                    <i class="fas fa-chevron-down chevron"></i>
+                </button>
+                <div class="server-dropdown" id="hindi-server-dropdown">
+                    <div class="server-item" data-server="hikke383" data-url="https://hikke383ehr.com/play/{{imdb_id}}?tr=0" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag hindi-flag">HI</div>
+                        <div class="server-info"><div class="server-name">Hikke383 – Hindi</div><div class="server-desc">Movies · High quality Hindi audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidzee" data-url="https://player.vidzee.wtf/embed/{{content_type}}/{{tmdb_id}}{{tv_episode}}?server=8" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag hindi-flag">HI</div>
+                        <div class="server-info"><div class="server-name">Vidzee – Hindi</div><div class="server-desc">Movies · Hindi for GERMAN content</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidnest-movies" data-url="https://vidnest.fun/{{content_type}}/{{tmdb_id}}{{tv_episode}}?server=delta" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag hindi-flag">HI</div>
+                        <div class="server-info"><div class="server-name">VidNest Movies – Hindi</div><div class="server-desc">Movies · Hindi for GERMAN content</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidnest-tv" data-url="https://vidnest.fun/tv/{{tmdb_id}}{{tv_episode}}?delta" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag hindi-flag">HI</div>
+                        <div class="server-info"><div class="server-name">VidNest TV – Hindi</div><div class="server-desc">TV Shows &amp; Animation · Hindi audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidfast-movies" data-url="https://vidfast.pro/{{content_type}}/{{tmdb_id}}{{tv_episode}}?server=bollywood">
+                        <div class="server-flag hindi-flag">HI</div>
+                        <div class="server-info"><div class="server-name">VidFast Movies – Hindi</div><div class="server-desc">Movies · Hindi for GERMAN content</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidfast-tv" data-url="https://vidfast.pro/tv/{{tmdb_id}}{{tv_episode}}?server=bollywood">
+                        <div class="server-flag hindi-flag">HI</div>
+                        <div class="server-info"><div class="server-name">VidFast TV – Hindi</div><div class="server-desc">TV Shows &amp; Animation · Hindi audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidify" data-url="https://player.vidify.top/embed/{{content_type}}/{{tmdb_id}}{{tv_episode}}?server=hindi">
+                        <div class="server-flag hindi-flag">HI</div>
+                        <div class="server-info"><div class="server-name">Vidify – Hindi</div><div class="server-desc">Movies · Hindi audio (with ads)</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENGLISH -->
+            <div class="server-selector">
+                <button class="server-btn" id="English-server-button">
+                    <i class="fas fa-cloud"></i> English
+                    <i class="fas fa-chevron-down chevron"></i>
+                </button>
+                <div class="server-dropdown" id="English-server-dropdown">
+                    <div class="server-item megaplay-server hidden" data-server="megaplay" data-url="https://megaplay.buzz/stream/s-4/{{offset_id}}/dub" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">MegaPlay – English</div><div class="server-desc">Anime/Cartoon · dub/sub</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="VOE-ENGLISH" data-url="{{Voe_Eng_Link}}">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">VOE – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="Filemoon-ENGLISH" data-url="{{Filemoon_Eng_Link}}">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">Filemoon – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="Vidmoly-ENGLISH" data-url="{{Vidmoly_Eng_Link}}">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">Vidmoly – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidify-ENGLISH" data-url="https://player.vidify.top/embed/{{content_type}}/{{tmdb_id}}{{tv_episode}}">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">Vidify – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidfast-ENGLISH" data-url="https://vidfast.pro/{{content_type}}/{{tmdb_id}}{{tv_episode}}">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">VidFast – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidnest-ENGLISH" data-url="https://vidnest.fun/{{content_type}}/{{tmdb_id}}{{tv_episode}}" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">VidNest – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidzee-ENGLISH" data-url="https://player.vidzee.wtf/embed/{{content_type}}/{{tmdb_id}}{{tv_episode}}" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">VidZee – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidrock-ENGLISH" data-url="https://vidrock.net/embed/{{content_type}}/{{tmdb_id}}{{tv_episode}}">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">VidRock – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="primeshow-ENGLISH" data-url="https://111movies.com/{{content_type}}/{{tmdb_id}}">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">PrimeShow – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="hikke383-ENGLISH" data-url="https://hikke383ehr.com/play/{{imdb_id}}?tr=1" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">Hikke383 – English</div><div class="server-desc">Movies · Original English audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BENGALI -->
+            <div class="server-selector">
+                <button class="server-btn" id="bengali-server-button">
+                    <i class="fas fa-cloud"></i> Bengali
+                    <i class="fas fa-chevron-down chevron"></i>
+                </button>
+                <div class="server-dropdown" id="bengali-server-dropdown">
+                    <div class="server-item" data-server="hikke383-bengali" data-url="https://hikke383ehr.com/play/{{imdb_id}}?tr=2" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag bengali-flag">BN</div>
+                        <div class="server-info"><div class="server-name">Hikke383 – Bengali</div><div class="server-desc">Movies · Bengali audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidzee-bengali" data-url="https://player.vidzee.wtf/embed/{{content_type}}/{{tmdb_id}}{{tv_episode}}?server=9" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag bengali-flag">BN</div>
+                        <div class="server-info"><div class="server-name">VidZee – Bengali</div><div class="server-desc">Movies · Bengali audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GERMAN -->
+            <div class="server-selector">
+                <button class="server-btn" id="german-server-button">
+                    <i class="fas fa-cloud"></i> German
+                    <i class="fas fa-chevron-down chevron"></i>
+                </button>
+                <div class="server-dropdown" id="german-server-dropdown">
+                    <div class="server-item" data-server="VOE German Dub" data-url="{{Voe_German_Dub_Link}}">
+                        <div class="server-flag german-flag">DE</div>
+                        <div class="server-info"><div class="server-name">VOE – German Dub</div><div class="server-desc">Movies · German audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="VIDMOLY-German Dub" data-url="{{Vidmoly_German_Dub_Link}}">
+                        <div class="server-flag german-flag">DE</div>
+                        <div class="server-info"><div class="server-name">VIDMOLY – German Dub</div><div class="server-desc">Movies · German audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="FILEMOON-GERMAN Dub" data-url="{{Filemoon_German_Dub_Link}}">
+                        <div class="server-flag german-flag">DE</div>
+                        <div class="server-info"><div class="server-name">FILEMOON – German Dub</div><div class="server-desc">Movies · German audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="VOE German Sub" data-url="{{Voe_Original_Lang_German_Sub_Link}}">
+                        <div class="server-flag german-flag">DE</div>
+                        <div class="server-info"><div class="server-name">VOE – German Sub</div><div class="server-desc">Movies · Foreign audio + sub</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="VIDMOLY-German Sub" data-url="{{Vidmoly_Original_Lang_German_Sub_Link}}">
+                        <div class="server-flag german-flag">DE</div>
+                        <div class="server-info"><div class="server-name">VIDMOLY – German Sub</div><div class="server-desc">Movies · Foreign audio + sub</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="FILEMOON-GERMAN Sub" data-url="{{Filemoon_Original_Lang_German_Sub_Link}}">
+                        <div class="server-flag german-flag">DE</div>
+                        <div class="server-info"><div class="server-name">FILEMOON – German Sub</div><div class="server-desc">Movies · Foreign audio + sub</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vidify-german" data-url="https://player.vidify.top/embed/{{content_type}}/{{tmdb_id}}{{tv_episode}}">
+                        <div class="server-flag german-flag">DE</div>
+                        <div class="server-info"><div class="server-name">Vidify – German</div><div class="server-desc">Movies · German audio</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GERMAN MOVIE -->
+            <div class="server-selector">
+                <button class="server-btn" id="germanmovie-server-button">
+                    <i class="fas fa-cloud"></i> GermanMovie
+                    <i class="fas fa-chevron-down chevron"></i>
+                </button>
+                <div class="server-dropdown" id="germanmovie-server-dropdown">
+                    <div class="server-item" data-server="meinecloud" data-url="https://meinecloud.click/movie/{{imdb_id}}" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag germanmovie-flag">GM</div>
+                        <div class="server-info"><div class="server-name">MeineCloud</div><div class="server-desc">Movies · German streaming</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="megakino" data-url="megakino-custom" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag germanmovie-flag">GM</div>
+                        <div class="server-info"><div class="server-name">Megakino</div><div class="server-desc">Movies &amp; TV · German streaming</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="vino" data-url="{vino_1 to vino_12}" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag germanmovie-flag">GM</div>
+                        <div class="server-info"><div class="server-name">Vino</div><div class="server-desc">Movies · German Vino service</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="dood" data-url="{dood_1 to dood_10}">
+                        <div class="server-flag germanmovie-flag">GM</div>
+                        <div class="server-info"><div class="server-name">Dood</div><div class="server-desc">Movies · German Dood platform</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                    <div class="server-item" data-server="fis" data-url="{fis_1 to fis_10}" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag germanmovie-flag">GM</div>
+                        <div class="server-info"><div class="server-name">Fis</div><div class="server-desc">Movies · German Fis service</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANIME ENGLISH -->
+            <div class="server-selector">
+                <button class="server-btn" id="animeenglish-server-button">
+                    <i class="fas fa-cloud"></i> Anime EN
+                    <i class="fas fa-chevron-down chevron"></i>
+                </button>
+                <div class="server-dropdown" id="animeenglish-server-dropdown">
+                    <div class="server-item" data-server="vidsrc" data-url="https://www.vidsrc.wtf/api/3/tv?id={{tmdb_id}}&s={{season}}&e={{episode}}">
+                        <div class="server-flag animeenglish-flag">AE</div>
+                        <div class="server-info"><div class="server-name">VidSrc – Anime English</div><div class="server-desc">Anime/TV · English streaming API</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+
+                    <div class="server-item" data-server="vidsrc" data-url="https://multiembed.mov/?video_id={{tmdb_id}}&tmdb=1&s={{season}}&e={{episode}}" >
+                        <div class="server-flag animeenglish-flag">AE</div>
+                        <div class="server-info"><div class="server-name">Multiembed – Anime English</div><div class="server-desc">Anime/TV · English streaming API</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+
+                     <div class="server-item" data-server="megaplay" data-url="https://megaplay.buzz/stream/s-4/{{offset_id}}/dub?autostart=true" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">MegaPlay – English</div><div class="server-desc">Anime/Cartoon · dub/sub</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+
+                    <div class="server-item" data-server="Vidwish" data-url="https://vidwish.live/stream/s-2/{{offset_id}}/dub?autostart=true" data-sandbox="allow-scripts allow-same-origin">
+                        <div class="server-flag ENGLISH-flag">EN</div>
+                        <div class="server-info"><div class="server-name">Vidwish – English</div><div class="server-desc">Anime/Cartoon · dub/sub</div></div>
+                        <i class="fas fa-check server-check"></i>
+                    </div>
+
+                                                                        
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PLAYER -->
+    <div class="player-wrap">
+        <div class="player-head">
+            <div class="movie-title" id="movie-title">Select a movie, TV show, or anime to stream</div>
+            <div class="current-server-badge">
+                <i class="fas fa-server"></i>
+                <span id="current-server-name">No server selected</span>
+            </div>
+        </div>
+        <div class="video-container">
+            <iframe class="video-player" id="video-player" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+    </div>
+
+    <div class="notice">
+        <i class="fas fa-info-circle"></i>
+        If the current server isn't working, try a different server from the options above. Some servers may show ads.
+    </div>
+
+</main>
+</div>
+
+<!-- URL SELECTION MODAL -->
+<div class="modal-overlay" id="url-modal">
+    <div class="modal">
+        <div class="modal-head">
+            <h2 class="modal-title" id="url-modal-title">Select URL</h2>
+            <button class="modal-close" id="url-modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="url-list" id="url-list"></div>
+        <div class="modal-foot">
+            <button class="btn btn-cancel" id="url-modal-cancel">Cancel</button>
+            <button class="btn" id="url-modal-play">▶ Play Selected</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const TMDB_API_KEY = '6fad3f86b8452ee232deb7977d7dcf58';
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+const ANIME_DATABASE_URL = 'https://cdn.jsdelivr.net/gh/danka1567/animegerman@main/anime_series_datalast_update_4_May_2026_v1.json';
+const GERMAN_CDN_URL = 'https://cdn.jsdelivr.net/gh/danka1567/animegerman@main/anime_world_to_1.json';
+const DEMOVIES_URL = 'https://cdn.jsdelivr.net/gh/danka1567/animegerman@main/demoveis1.json';
+
+let currentContent=null,currentSeason=1,currentEpisode=1,currentContentType='movie',currentAnimeId=null;
+let allSeasons=[],animeDatabase=[],germanDatabase=[],demoviesDatabase=[];
+let currentMatchedAnime=null,currentGermanData=null,currentDemoviesData=null;
+let currentImdbId=null,currentServerType=null,selectedUrl=null;
+
+function loadAnimeDatabase(){
+    fetch(ANIME_DATABASE_URL).then(r=>r.json()).then(d=>{animeDatabase=d;checkAllLoaded();}).catch(()=>{checkAllLoaded();});
+}
+function loadGermanDatabase(){
+    fetch(GERMAN_CDN_URL).then(r=>r.json()).then(d=>{germanDatabase=d;checkAllLoaded();}).catch(()=>{});
+}
+let _loadCount=0;
+function checkAllLoaded(){
+    _loadCount++;
+    if(_loadCount>=2){
+        document.getElementById('database-info').innerHTML='<i class="fas fa-check-circle"></i> All databases loaded';
+    }
+}
+function loadDemoviesDatabase(){
+    fetch(DEMOVIES_URL).then(r=>r.json()).then(d=>{
+        demoviesDatabase=d;
+        document.getElementById('database-info').innerHTML='<i class="fas fa-check-circle"></i> All databases loaded successfully';
+    }).catch(e=>{
+        document.getElementById('database-info').innerHTML=`<i class="fas fa-exclamation-triangle"></i> Error loading database`;
+    });
+}
+
+function getOffsetIdForCurrentContent(){
+    if(!currentContent)return null;
+    const m=animeDatabase.find(a=>a.tmdb_id===currentContent.id);
+    if(m){return(currentContentType==='tv'||currentContentType==='anime')?m.episode_offset+currentEpisode:m.episode_offset;}
+    return null;
+}
+function getGermanDataForCurrentContent(){
+    if(!currentContent)return null;
+    return germanDatabase.find(i=>i.tmdb_id===currentContent.id.toString()&&parseInt(i.Episode_number)===currentEpisode)||null;
+}
+function getDemoviesDataForCurrentContent(){
+    if(!currentContent)return null;
+    let m=demoviesDatabase.find(i=>i.tmdb_id&&i.tmdb_id.toString()===currentContent.id.toString());
+    if(!m&&currentImdbId) m=demoviesDatabase.find(i=>i.imdb_id&&i.imdb_id===currentImdbId);
+    if(!m&&currentContent.title){const t=currentContent.title.toLowerCase();m=demoviesDatabase.find(i=>i.movie_name&&i.movie_name.toLowerCase().includes(t));}
+    return m||null;
+}
+function updateServerUrlsWithGermanData(){
+    const gd=getGermanDataForCurrentContent();currentGermanData=gd;
+    if(gd){
+        const map={
+            'VOE-ENGLISH':'Voe_Eng_Link','Filemoon-ENGLISH':'Filemoon_Eng_Link','Vidmoly-ENGLISH':'Vidmoly_Eng_Link',
+            'VOE German Dub':'Voe_German_Dub_Link','VIDMOLY-German Dub':'Vidmoly_German_Dub_Link','FILEMOON-GERMAN Dub':'Filemoon_German_Dub_Link',
+            'VOE German Sub':'Voe_Original_Lang_German_Sub_Link','VIDMOLY-German Sub':'Vidmoly_Original_Lang_German_Sub_Link','FILEMOON-GERMAN Sub':'Filemoon_Original_Lang_German_Sub_Link'
+        };
+        for(const[s,k]of Object.entries(map)){const el=document.querySelector(`[data-server="${s}"]`);if(el&&gd[k])el.setAttribute('data-url',gd[k]);}
+    }else{resetServerUrls();}
+}
+function resetServerUrls(){
+    const map={'VOE-ENGLISH':'{{Voe_Eng_Link}}','Filemoon-ENGLISH':'{{Filemoon_Eng_Link}}','Vidmoly-ENGLISH':'{{Vidmoly_Eng_Link}}','VOE German Dub':'{{Voe_German_Dub_Link}}','VIDMOLY-German Dub':'{{Vidmoly_German_Dub_Link}}','FILEMOON-GERMAN Dub':'{{Filemoon_German_Dub_Link}}','VOE German Sub':'{{Voe_Original_Lang_German_Sub_Link}}','VIDMOLY-German Sub':'{{Vidmoly_Original_Lang_German_Sub_Link}}','FILEMOON-GERMAN Sub':'{{Filemoon_Original_Lang_German_Sub_Link}}'};
+    for(const[s,v]of Object.entries(map)){const el=document.querySelector(`[data-server="${s}"]`);if(el)el.setAttribute('data-url',v);}
+}
+function fetchImdbId(cid,ctype){
+    return fetch(`${TMDB_BASE_URL}/${ctype}/${cid}?api_key=${TMDB_API_KEY}`).then(r=>r.json()).then(d=>{
+        if(d.imdb_id)return d.imdb_id;
+        if(ctype==='tv')return fetch(`${TMDB_BASE_URL}/tv/${cid}/external_ids?api_key=${TMDB_API_KEY}`).then(r=>r.json()).then(x=>x.imdb_id||('tt'+(10000000+cid))).catch(()=>'tt'+(10000000+cid));
+        return 'tt'+(10000000+cid);
+    }).catch(()=>'tt'+(10000000+cid));
+}
+function showUrlModal(serverType){
+    const modal=document.getElementById('url-modal'),title=document.getElementById('url-modal-title'),list=document.getElementById('url-list');
+    currentServerType=serverType;selectedUrl=null;list.innerHTML='';
+    title.textContent=`Select ${serverType.toUpperCase()} URL`;
+    const urls=getUrlsForServerType(serverType);
+    if(!urls.length){list.innerHTML='<div class="err-msg">No URLs available for this content.</div>';}
+    else{
+        urls.forEach((url,i)=>{
+            const div=document.createElement('div');div.className='url-item';div.setAttribute('data-url',url);
+            div.innerHTML=`<div class="url-name">${serverType}_${i+1}</div><div class="url-value">${url}</div>`;
+            div.addEventListener('click',function(){document.querySelectorAll('.url-item').forEach(x=>x.classList.remove('active'));this.classList.add('active');selectedUrl=url;});
+            list.appendChild(div);
+        });
+        list.firstChild.classList.add('active');selectedUrl=urls[0];
+    }
+    modal.classList.add('active');
+}
+function getUrlsForServerType(t){
+    if(!currentDemoviesData)return[];
+    const urls=[],lens={vino:12,dood:10,fis:10};
+    for(let i=1;i<=(lens[t]||0);i++){const u=currentDemoviesData[`${t}_${i}`];if(u&&u.trim())urls.push(u);}
+    return urls;
+}
+function hideUrlModal(){document.getElementById('url-modal').classList.remove('active');}
+function playSelectedUrl(){
+    if(selectedUrl){
+        document.getElementById('video-player').src=selectedUrl;
+        document.getElementById('current-server-name').textContent=`${currentServerType.toUpperCase()} – ${selectedUrl.substring(0,30)}…`;
+        hideUrlModal();
+    }
+}
+function generateMegakinoUrl(){
+    if(!currentContent||!currentImdbId)return'';
+    return`https://megakino.stream/p/${currentContentType==='movie'?'movies':'series'}/${currentImdbId}`;
+}
+function generateServerUrl(template){
+    if(!currentContent)return'';
+    let u=template;
+    u=u.replace('{{content_type}}',currentContentType==='anime'?'anime':currentContentType);
+    u=u.replace('{{tmdb_id}}',currentContent.id);
+    u=u.replace('{{season}}',currentSeason);
+    u=u.replace('{{episode}}',currentEpisode);
+    u=u.replace('{{imdb_id}}',currentImdbId||'');
+    u=u.replace('{{anilist_id}}',currentAnimeId||currentContent.id);
+    u=u.replace('{{tv_episode}}',(currentContentType==='tv'||currentContentType==='anime')?`/${currentSeason}/${currentEpisode}`:'');
+    if(u.includes('{{offset_id}}')){const oid=getOffsetIdForCurrentContent();u=u.replace('{{offset_id}}',oid||currentContent.id);}
+    if(currentGermanData){
+        const gmap={'{{Voe_Eng_Link}}':'Voe_Eng_Link','{{Filemoon_Eng_Link}}':'Filemoon_Eng_Link','{{Vidmoly_Eng_Link}}':'Vidmoly_Eng_Link','{{Voe_German_Dub_Link}}':'Voe_German_Dub_Link','{{Vidmoly_German_Dub_Link}}':'Vidmoly_German_Dub_Link','{{Filemoon_German_Dub_Link}}':'Filemoon_German_Dub_Link','{{Voe_Original_Lang_German_Sub_Link}}':'Voe_Original_Lang_German_Sub_Link','{{Vidmoly_Original_Lang_German_Sub_Link}}':'Vidmoly_Original_Lang_German_Sub_Link','{{Filemoon_Original_Lang_German_Sub_Link}}':'Filemoon_Original_Lang_German_Sub_Link'};
+        for(const[tk,k]of Object.entries(gmap))u=u.replace(tk,currentGermanData[k]||'');
+    }
+    return u;
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    loadAnimeDatabase();loadGermanDatabase();loadDemoviesDatabase();
+
+    const searchInput=document.getElementById('search-input');
+    const searchButton=document.getElementById('search-button');
+    const searchResults=document.getElementById('search-results');
+    const episodeNav=document.getElementById('episode-nav');
+    const seasonSelector=document.getElementById('season-selector');
+    const episodeGrid=document.getElementById('episode-grid');
+    const videoPlayer=document.getElementById('video-player');
+    const currentServerName=document.getElementById('current-server-name');
+    const movieTitle=document.getElementById('movie-title');
+    const databaseInfo=document.getElementById('database-info');
+    const megaplayServer=document.querySelector('.megaplay-server');
+    const serverItems=document.querySelectorAll('.server-item');
+
+    // ── Search ──
+    searchButton.addEventListener('click',performSearch);
+    searchInput.addEventListener('keypress',e=>{if(e.key==='Enter')performSearch();});
+
+    function performSearch(){
+        const q=searchInput.value.trim();if(!q)return;
+        searchResults.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching…</div>';
+        searchResults.classList.remove('hidden');
+        fetch(`${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(q)}`)
+            .then(r=>r.json()).then(d=>displaySearchResults(d.results))
+            .catch(()=>{searchResults.innerHTML='<div class="err-msg">Search failed. Please try again.</div>';});
+    }
+
+    function displaySearchResults(results){
+        searchResults.innerHTML='';
+        if(!results||!results.length){searchResults.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted)">No results found.</div>';return;}
+        results.forEach(r=>{
+            const el=document.createElement('div');el.className='search-result';
+            const mt=r.media_type,title=r.title||r.name;
+            const year=r.release_date?new Date(r.release_date).getFullYear():r.first_air_date?new Date(r.first_air_date).getFullYear():'N/A';
+            const isAnime=title.toLowerCase().includes('anime')||(mt==='tv'&&r.genre_ids&&r.genre_ids.includes(16));
+            const poster=r.poster_path?`${TMDB_IMAGE_BASE_URL}${r.poster_path}`:'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDIwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiMxMzEzMmEiLz48cGF0aCBkPSJNODAgMTIwSDEyMFYxODBIODBWMTIwWiIgZmlsbD0iIzZjNjNmZiIvPjxwYXRoIGQ9Ik02MCA2MEgxNDBWODBINjBWNjBaIiBmaWxsPSIjNmM2M2ZmIi8+PHBhdGggZD0iTTQwIDIyMEgxNjBWMjQwSDQwVjIyMFoiIGZpbGw9IiM2YzYzZmYiLz48L3N2Zz4=';
+            el.innerHTML=`<img src="${poster}" alt="${title}" class="result-poster" loading="lazy"><div class="result-info"><div class="result-title">${title}</div><div class="result-year">${year} · ${mt==='movie'?'Movie':'TV Show'}</div>${isAnime?'<div class="result-type">Anime</div>':''}</div>`;
+            el.addEventListener('click',()=>selectContent(r,isAnime));
+            searchResults.appendChild(el);
+        });
+    }
+
+    function selectContent(content,isAnime=false){
+        currentContent=content;currentContentType=content.media_type;
+        currentMatchedAnime=null;currentGermanData=null;currentDemoviesData=null;currentImdbId=null;
+        currentAnimeId=isAnime?content.id:null;
+        const title=content.title||content.name;
+        const year=content.release_date?new Date(content.release_date).getFullYear():content.first_air_date?new Date(content.first_air_date).getFullYear():'';
+        movieTitle.textContent=`${title}${year?' ('+year+')':''}`;
+        searchResults.classList.add('hidden');
+
+        function updateDBInfo(){
+            let info='';
+            if(currentMatchedAnime)info+=`Anime: ${currentMatchedAnime.title} | `;
+            if(currentGermanData)info+=`German CDN: Ep ${currentGermanData.Episode_number} | `;
+            if(currentDemoviesData)info+=`Demovies: ${currentDemoviesData.movie_name}`;
+            databaseInfo.innerHTML=`<i class="fas fa-database"></i> ${info||'No matching data in databases'}`;
+        }
+
+        const ctype=content.media_type==='movie'?'movie':'tv';
+        fetchImdbId(content.id,ctype).then(imdbId=>{
+            currentImdbId=imdbId;
+            const ma=animeDatabase.find(a=>a.tmdb_id===content.id);if(ma)currentMatchedAnime=ma;
+            currentGermanData=getGermanDataForCurrentContent();
+            currentDemoviesData=getDemoviesDataForCurrentContent();
+            updateDBInfo();
+        }).catch(()=>{
+            const ma=animeDatabase.find(a=>a.tmdb_id===content.id);if(ma)currentMatchedAnime=ma;
+            currentGermanData=getGermanDataForCurrentContent();
+            currentDemoviesData=getDemoviesDataForCurrentContent();
+            updateDBInfo();
+        });
+
+        updateServerUrlsWithGermanData();
+        if(isAnime||(content.genre_ids&&content.genre_ids.includes(16)))megaplayServer.classList.remove('hidden');
+        else megaplayServer.classList.add('hidden');
+        if(content.media_type==='tv'||isAnime)fetchAllSeasons(content.id);
+        else episodeNav.classList.add('hidden');
+        serverItems.forEach(i=>i.classList.remove('active'));
+        currentServerName.textContent='No server selected';
+        videoPlayer.src='';
+    }
+
+    function fetchAllSeasons(cid){
+        episodeNav.classList.remove('hidden');
+        episodeGrid.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading seasons…</div>';
+        fetch(`${TMDB_BASE_URL}/tv/${cid}?api_key=${TMDB_API_KEY}`).then(r=>r.json()).then(tv=>{
+            allSeasons=tv.seasons.filter(s=>s.season_number>0);
+            if(!allSeasons.length){episodeGrid.innerHTML='<div class="err-msg">No seasons available.</div>';return;}
+            seasonSelector.innerHTML='';
+            allSeasons.forEach(s=>{const o=document.createElement('option');o.value=s.season_number;o.textContent=`Season ${s.season_number} (${s.episode_count} ep)`;seasonSelector.appendChild(o);});
+            currentSeason=allSeasons[0].season_number;loadEpisodesForCurrentSeason();
+        }).catch(()=>{episodeGrid.innerHTML='<div class="err-msg">Error loading seasons.</div>';});
+    }
+
+    seasonSelector.addEventListener('change',function(){currentSeason=parseInt(this.value);loadEpisodesForCurrentSeason();});
+
+    function loadEpisodesForCurrentSeason(){
+        episodeGrid.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading episodes…</div>';
+        fetch(`${TMDB_BASE_URL}/tv/${currentContent.id}/season/${currentSeason}?api_key=${TMDB_API_KEY}`).then(r=>r.json()).then(sd=>{
+            episodeGrid.innerHTML='';
+            if(!sd.episodes||!sd.episodes.length){episodeGrid.innerHTML='<div class="err-msg">No episodes available.</div>';return;}
+            sd.episodes.forEach(ep=>{
+                const btn=document.createElement('button');btn.className='episode-button';btn.textContent=ep.episode_number;btn.title=ep.name||`Episode ${ep.episode_number}`;
+                btn.addEventListener('click',function(){
+                    document.querySelectorAll('.episode-button').forEach(b=>b.classList.remove('active'));
+                    this.classList.add('active');currentEpisode=ep.episode_number;
+                    updateServerUrlsWithGermanData();updateServerUrlsWithEpisode();
+                });
+                episodeGrid.appendChild(btn);
+            });
+            if(episodeGrid.children.length){episodeGrid.children[0].classList.add('active');currentEpisode=sd.episodes[0].episode_number;updateServerUrlsWithGermanData();}
+        }).catch(()=>{episodeGrid.innerHTML='<div class="err-msg">Error loading episodes.</div>';});
+    }
+
+    function updateServerUrlsWithEpisode(){
+        const active=document.querySelector('.server-item.active');
+        if(active&&currentContent&&(currentContentType==='tv'||currentContentType==='anime')){
+            const t=active.getAttribute('data-server');
+            if(t!=='vino'&&t!=='dood'&&t!=='fis'&&t!=='megakino'){
+                const url=generateServerUrl(active.getAttribute('data-url'));
+                const sb=active.getAttribute('data-sandbox');
+                if(sb)videoPlayer.setAttribute('sandbox',sb);else videoPlayer.removeAttribute('sandbox');
+                videoPlayer.src=url;
+            }
+        }
+    }
+
+    // ── Server dropdowns ──
+    const allBtns=document.querySelectorAll('.server-btn');
+    const allDropdowns=document.querySelectorAll('.server-dropdown');
+
+    allBtns.forEach(btn=>{
+        btn.addEventListener('click',function(e){
+            e.stopPropagation();
+            const id=this.id.replace('-button','-dropdown');
+            const dd=document.getElementById(id);
+            const isOpen=dd.classList.contains('active');
+            allDropdowns.forEach(d=>{d.classList.remove('active');});
+            allBtns.forEach(b=>b.classList.remove('open'));
+            if(!isOpen){dd.classList.add('active');this.classList.add('open');}
+        });
+    });
+
+    document.addEventListener('click',()=>{
+        allDropdowns.forEach(d=>d.classList.remove('active'));
+        allBtns.forEach(b=>b.classList.remove('open'));
+    });
+
+    allDropdowns.forEach(d=>d.addEventListener('click',e=>e.stopPropagation()));
+
+    serverItems.forEach(item=>{
+        item.addEventListener('click',function(){
+            if(!currentContent){alert('Please select a movie or TV show first.');return;}
+            const st=this.getAttribute('data-server'),sn=this.querySelector('.server-name').textContent;
+            const tpl=this.getAttribute('data-url'),sb=this.getAttribute('data-sandbox');
+            serverItems.forEach(i=>i.classList.remove('active'));this.classList.add('active');
+            allDropdowns.forEach(d=>d.classList.remove('active'));
+            allBtns.forEach(b=>b.classList.remove('open'));
+            if(st==='vino'||st==='dood'||st==='fis'){
+                if(currentDemoviesData)showUrlModal(st);
+                else alert('No stream URLs available for this content.');
+            } else if(st==='megakino'){
+                if(!currentImdbId){alert('IMDb ID not available.');return;}
+                const url=generateMegakinoUrl();
+                if(sb)videoPlayer.setAttribute('sandbox',sb);else videoPlayer.removeAttribute('sandbox');
+                videoPlayer.src=url;currentServerName.textContent=sn;
+            } else {
+                const url=generateServerUrl(tpl);
+                if(sb)videoPlayer.setAttribute('sandbox',sb);else videoPlayer.removeAttribute('sandbox');
+                videoPlayer.src=url;currentServerName.textContent=sn;
+                if(st==='megaplay'&&currentMatchedAnime)databaseInfo.innerHTML=`<i class="fas fa-database"></i> Serial no: ${currentMatchedAnime.serial_no} – ${currentMatchedAnime.title}`;
+            }
+        });
+    });
+
+    // ── Modal ──
+    document.getElementById('url-modal-close').addEventListener('click',hideUrlModal);
+    document.getElementById('url-modal-cancel').addEventListener('click',hideUrlModal);
+    document.getElementById('url-modal-play').addEventListener('click',playSelectedUrl);
+    document.getElementById('url-modal').addEventListener('click',function(e){if(e.target===this)hideUrlModal();});
+});
+</script>
+<h5><a href="https://anikototv.to/watch/samurai-x-nhtwe/ep-55" style="color: yellow;">https://anikototv.to/watch/samurai-x-nhtwe/ep-55</a></h5>
+
+<h5><a href="https://anikai.to/home" style="color: yellow;">https://anikai.to/home</a></h5>
+
+<h5><a href="https://anidap.se/home" style="color: yellow;">https://anidap.se/home</a></h5>
+
+<h5><a href="https://cinebto.com/watch/tv/31910/1/2" style="color: yellow;">https://cinebto.com/watch/tv/31910/1/2</a></h5>
+</body>
+</html>
